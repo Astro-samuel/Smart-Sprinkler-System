@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sprinkler",
+      "runtimeExecutable": ".venv/bin/uvicorn",
+      "runtimeArgs": ["api.index:app", "--reload", "--port", "8000"],
+      "port": 8000
+    }
+  ]
+}
