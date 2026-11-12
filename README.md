@@ -28,7 +28,6 @@ sprinkler/config.py     Global defaults: thresholds, schedule, mock zones
 sprinkler/weather.py    Open-Meteo forecast + geocoding client
 sprinkler/irrigation.py Recommendation, weekly plan, savings
 public/                 Frontend
-vercel.json             Routes /api/* to the FastAPI function
 ```
 
 ## API
@@ -52,7 +51,9 @@ Then open http://localhost:8000. Browsers only allow GPS on `localhost` or HTTPS
 
 1. Push this repo to GitHub.
 2. In the Vercel dashboard, go to **Add New → Project** and import `Smart-Sprinkler-System`.
-   Leave Framework Preset as **Other** and keep the defaults. No environment variables are needed.
+   Vercel auto-detects the **FastAPI** preset (entrypoint `api/index.py`). Keep the defaults; no
+   environment variables are needed. Do not add a `vercel.json` rewrite to `/api/index`: FastAPI
+   would then see the wrong path and return 404.
 3. Deploy. Every push to `main` redeploys production, and every PR gets a preview URL.
 
 ## Hooking up real hardware later
