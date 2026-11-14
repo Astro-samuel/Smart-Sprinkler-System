@@ -5,121 +5,132 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Smart Sprinkler</title>
   <meta name="description" content="Weather-aware watering for your home sprinkler system (prototype)." />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💧</text></svg>" />
+  <meta name="theme-color" content="#2b5a40" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#16231c" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 2h14v16l-3 4H5z' fill='%232b5a40'/><path d='M12 6c2.600 3 4 5 4 7a4 4 0 0 1-8 0c0-2 1.400-4 4-7z' fill='white'/></svg>" />
+  <link rel="preload" href="/fonts/barlow-500.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <a class="skip" href="#app">Skip to content</a>
   <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true">💧</span>
-      <span>Smart Sprinkler</span>
-      <span class="badge">Prototype</span>
+    <div class="wrap topbar-in">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h14v16l-3 4H5z" fill="currentColor"/><circle cx="12" cy="5.200" r="1.200" fill="var(--bar)"/><path d="M12 8.500c2.200 2.600 3.400 4.300 3.400 6a3.400 3.400 0 0 1-6.800 0c0-1.700 1.200-3.400 3.400-6z" fill="var(--bar)"/></svg>
+        <span class="brand-name">Smart Sprinkler</span>
+        <span class="badge">Prototype</span>
+      </div>
+      <button id="locationBtn" class="loc-btn" type="button" aria-haspopup="dialog">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.500-5.600-6.500-11a6.500 6.500 0 0 1 13 0c0 5.400-6.500 11-6.500 11z"/><circle cx="12" cy="10" r="2.200"/></svg>
+        <span id="locationName">Locating…</span>
+      </button>
     </div>
-    <button id="locationBtn" class="loc-btn" type="button" aria-haspopup="dialog">
-      <span aria-hidden="true">📍</span>
-      <span id="locationName">Locating…</span>
-    </button>
   </header>
 
   <!-- Location picker -->
   <dialog id="locationDialog" class="loc-dialog">
     <form id="searchForm" class="search" role="search">
-      <h2>Set your location</h2>
+      <h2>Where is your garden?</h2>
       <div class="search-row">
-        <input id="searchInput" type="search" placeholder="City or town, e.g. Kelowna" autocomplete="off" required minlength="2" />
+        <input id="searchInput" type="search" placeholder="City or town, e.g. Kelowna…" name="q" autocomplete="off" spellcheck="false" required minlength="2" aria-label="City or town" />
         <button class="btn primary" type="submit">Search</button>
       </div>
       <ul id="searchResults" class="results" aria-live="polite"></ul>
       <div class="dialog-actions">
-        <button id="gpsBtn" class="btn" type="button">📡 Use my current location</button>
-        <button id="demoBtn" class="btn ghost" type="button">Use demo location (Vancouver)</button>
-        <button id="closeDialog" class="btn ghost" type="button" value="cancel">Close</button>
+        <button id="gpsBtn" class="btn" type="button">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.500"/><path d="M12 2.500v4M12 17.500v4M2.500 12h4M17.500 12h4"/></svg>
+          Use my location
+        </button>
+        <button id="demoBtn" class="btn ghost" type="button">Demo: Vancouver</button>
+        <button id="closeDialog" class="btn ghost push" type="button" value="cancel">Close</button>
       </div>
     </form>
   </dialog>
 
-  <main id="app">
-    <section id="status" class="status card">
+  <main id="app" class="wrap" tabindex="-1">
+    <section id="status" class="status" aria-live="polite">
       <div class="spinner" aria-hidden="true"></div>
       <p id="statusText">Finding your location…</p>
+      <button id="statusAction" class="btn" type="button" hidden></button>
     </section>
 
-    <div id="dashboard" class="grid" hidden>
-      <!-- Recommendation -->
-      <section id="recCard" class="card rec span-2" aria-labelledby="recHeadline">
-        <div class="rec-top">
-          <span id="recAction" class="pill"></span>
-          <span class="muted small">Today's recommendation</span>
+    <div id="dashboard" class="dash" hidden>
+      <!-- The verdict: a care tag -->
+      <section id="recCard" class="hero" aria-labelledby="recHeadline">
+        <div class="hero-top">
+          <p class="verdict"><span class="verdict-day">Today</span><span id="recAction" class="verdict-word"></span></p>
+          <div id="recDrops" class="drops-lg" role="img"></div>
         </div>
         <h1 id="recHeadline"></h1>
         <ul id="recReasons" class="reasons"></ul>
-        <div id="recMetrics" class="metrics"></div>
+        <dl id="recMetrics" class="metrics"></dl>
       </section>
 
-      <!-- Current weather -->
-      <section class="card now">
+      <section class="panel p-now">
         <h2>Right now</h2>
         <div class="now-main">
           <span id="nowIcon" class="now-icon" aria-hidden="true"></span>
           <div>
             <div id="nowTemp" class="now-temp"></div>
-            <div id="nowDesc" class="muted"></div>
+            <div id="nowDesc" class="muted small"></div>
           </div>
         </div>
         <dl id="nowDetails" class="details"></dl>
       </section>
 
-      <!-- Next 24h -->
-      <section class="card">
-        <h2>Rain chance, next 24 h</h2>
-        <div id="hourly" class="hourly" role="img" aria-label="Hourly chance of rain"></div>
-        <div class="hourly-legend muted small"><span id="hourlyStart"></span><span id="hourlyEnd"></span></div>
-      </section>
-
-      <!-- Schedule -->
-      <section class="card span-2">
-        <div class="card-head">
-          <h2>This week's watering plan</h2>
+      <section class="panel p-week">
+        <div class="panel-head">
+          <h2>This week's plan</h2>
           <span class="muted small" id="scheduleNote"></span>
         </div>
         <div id="schedule" class="schedule"></div>
       </section>
 
-      <!-- Forecast -->
-      <section class="card">
-        <h2>7-day forecast</h2>
-        <ul id="forecast" class="forecast"></ul>
-      </section>
-
-      <!-- Savings -->
-      <section class="card savings">
-        <h2>Water saved this week</h2>
-        <div class="savings-main">
-          <span id="savedLitres" class="big"></span>
-          <span class="muted">litres</span>
+      <section class="panel p-hourly">
+        <h2>Rain chance, next 24 h</h2>
+        <p id="hourlySummary" class="muted small summary"></p>
+        <div class="hourly-row">
+          <div class="hourly-scale" aria-hidden="true"><span>100%</span><span>50%</span><span>0%</span></div>
+          <div id="hourly" class="hourly" role="img" aria-label="Hourly chance of rain"></div>
         </div>
-        <div class="bar" aria-hidden="true"><div id="savedBar" class="bar-fill"></div></div>
-        <p id="savingsText" class="muted small"></p>
+        <div class="hourly-legend muted small"><span id="hourlyStart"></span><span id="hourlyMid"></span><span id="hourlyEnd"></span></div>
       </section>
 
-      <!-- Zones -->
-      <section class="card span-2">
-        <div class="card-head">
-          <h2>Zones <span class="muted small">(simulated)</span></h2>
+      <section class="panel p-zones">
+        <div class="panel-head">
+          <h2>Zones <span class="chip">simulated</span></h2>
           <label class="toggle small">
             <input id="demoSpeed" type="checkbox" checked />
             Demo speed (1 min = 1 s)
           </label>
         </div>
         <div id="zones" class="zones"></div>
-        <p class="muted small">Only one zone runs at a time, so water pressure stays up. No real valves are connected yet.</p>
+        <p class="muted small note">One zone runs at a time, so water pressure stays up. No real valves are connected yet.</p>
+      </section>
+
+      <section class="panel p-forecast">
+        <h2>7-day forecast</h2>
+        <ul id="forecast" class="forecast"></ul>
+      </section>
+
+      <section class="panel p-savings">
+        <h2>Water saved this week</h2>
+        <p class="saved-line"><span id="savedLitres" class="saved"></span> <span class="saved-unit">litres</span></p>
+        <dl class="srows">
+          <div class="srow"><dt>Fixed timer</dt><div class="bar" aria-hidden="true"><div id="baseBar" class="bar-fill"></div></div><dd id="baseLitres"></dd></div>
+          <div class="srow smart"><dt>Smart plan</dt><div class="bar" aria-hidden="true"><div id="savedBar" class="bar-fill"></div></div><dd id="planLitres"></dd></div>
+        </dl>
+        <p id="savingsText" class="muted small"></p>
       </section>
     </div>
   </main>
 
-  <footer class="footer muted small">
-    <span>Early prototype. Nothing is stored.</span>
-    <span>Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span>
+  <footer class="footer small">
+    <div class="wrap footer-in">
+      <span>Early prototype. Nothing is stored.</span>
+      <span>Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</span>
+    </div>
   </footer>
 
   <script src="/app.js" type="module"></script>
