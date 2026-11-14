@@ -11,8 +11,10 @@ sys.path.insert(0, str(ROOT))
 import httpx  # noqa: E402
 from fastapi import FastAPI, HTTPException, Query  # noqa: E402
 
+from pydantic import BaseModel, Field  # noqa: E402
+
 from sprinkler import config as C  # noqa: E402
-from sprinkler import irrigation, weather  # noqa: E402
+from sprinkler import device, irrigation, weather  # noqa: E402
 
 app = FastAPI(
     title="Smart Sprinkler API",
@@ -56,6 +58,35 @@ async def dashboard(
         "savings": irrigation.water_savings(plan),
         "zones": C.ZONES,
     }
+
+
+class StartZone(BaseModel):
+    duration_ms: int = Field(..., ge=1000, le=3_600_000)
+
+
+def _require_zone(zone_id: int) -> None:
+    if zone_id not in {z["id"] for z in C.ZONES}:
+        raise HTTPException(404, f"Unknown zone {zone_id}")
+
+
+@app.post("/api/zones/{zone_id}/start")
+def start_zone(zone_id: int, body: StartZone):
+    _require_zone(zone_id)
+    device.start(zone_id, body.duration_ms)
+    return device.state()
+
+
+@app.post("/api/zones/{zone_id}/stop")
+def stop_zone(zone_id: int):
+    _require_zone(zone_id)
+    device.stop(zone_id)
+    return device.state()
+
+
+@app.get("/api/device/state")
+def device_state():
+    """Polled by the ESP32: should the relay be on, and for how much longer."""
+    return device.state()
 
 
 # Local dev only: serve the static frontend. On Vercel, /public is served by the CDN.

@@ -286,9 +286,26 @@ function animateNumber(node, target) {
 // Zones: mock controller. Swap `controller` for real device calls later
 // (e.g. fetch('/api/zones/1/start') → ESP32 / MQTT bridge).
 // ---------------------------------------------------------------------------
+// Tells the API, which the ESP32 polls to switch its relay. Failures are non-fatal so the
+// on-screen demo still works with no device/server route available.
+async function post(path, body) {
+  try {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return true;
+  } catch (err) {
+    console.warn(`Device call ${path} failed:`, err);
+    return false;
+  }
+}
 const controller = {
-  async start(zoneId, minutes) { console.info(`[mock] start zone ${zoneId} for ${minutes} min`); return true; },
-  async stop(zoneId) { console.info(`[mock] stop zone ${zoneId}`); return true; },
+  // durationMs is real wall-clock time (already scaled by demo speed).
+  start: (zoneId, durationMs) => post(`/api/zones/${zoneId}/start`, { duration_ms: durationMs }),
+  stop: (zoneId) => post(`/api/zones/${zoneId}/stop`),
 };
 
 const zones = {
@@ -337,8 +354,8 @@ const zones = {
   async start(id) {
     if (this.running) await this.stop(this.running.id);
     const minutes = Number($(`zmin-${id}`).value);
-    await controller.start(id, minutes);
     const totalMs = minutes * this.msPerMinute();
+    await controller.start(id, totalMs);
     this.running = { id, minutes, totalMs, startedAt: Date.now(), timer: setInterval(() => this.tick(), 200) };
     $(`zone-${id}`).classList.add("running");
     $(`zstate-${id}`).textContent = "RUNNING";
