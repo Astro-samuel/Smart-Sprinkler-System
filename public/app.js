@@ -174,6 +174,7 @@ function renderRecommendation(rec) {
     [`${fmt(Math.max(0, m.water_deficit_mm), 1)} mm`, "Water deficit"],
     [`${fmt(m.min_temp_c)}°C`, "Today's low"],
     [`${fmt(m.wind_kmh)} km/h`, "Wind now"],
+    [`${fmt(m.humidity_pct)}%`, "Humidity now"],
   ];
   $("recMetrics").replaceChildren(
     ...items.map(([v, label]) => el("div", { class: "metric" }, el("dt", {}, label), el("dd", {}, v))),

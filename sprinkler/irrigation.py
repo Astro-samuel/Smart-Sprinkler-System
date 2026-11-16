@@ -64,6 +64,7 @@ def recommend_today(data: dict) -> dict:
     tmin = _num(d["temperature_2m_min"][TODAY])
     temp_now = _num(cur["temperature_2m"])
     wind = _num(cur["wind_speed_10m"])
+    humidity = _num(cur["relative_humidity_2m"])
 
     metrics = {
         "rain_last_48h_mm": round(rain_48h, 1),
@@ -73,6 +74,7 @@ def recommend_today(data: dict) -> dict:
         "water_deficit_mm": round(deficit, 1),
         "min_temp_c": round(tmin, 1),
         "wind_kmh": round(wind, 1),
+        "humidity_pct": round(humidity),
     }
 
     def result(action, headline, reasons, minutes=0):
@@ -96,6 +98,10 @@ def recommend_today(data: dict) -> dict:
     if nxt["rain_mm"] >= C.FORECAST_RAIN_SKIP_MM and nxt["prob_max"] >= C.FORECAST_PROB_MIN:
         return result(SKIP, "Skip watering: rain is on the way", [
             f"{nxt['rain_mm']:.1f} mm expected in the next 24 h ({nxt['prob_max']}% chance).",
+        ])
+    if humidity >= C.HIGH_HUMIDITY_PCT:
+        return result(SKIP, "Skip watering: air is saturated", [
+            f"Humidity is {humidity:.0f}%, so the lawn is losing little water and the soil is likely still damp.",
         ])
     if deficit < C.MIN_DEFICIT_MM:
         return result(SKIP, "Skip watering: lawn has enough water", [
