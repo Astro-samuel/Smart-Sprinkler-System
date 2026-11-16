@@ -13,7 +13,7 @@ SCHEDULED_START = "06:00"
 # Decision thresholds
 FREEZE_TEMP_C = 2.0          # skip if forecast low at or below this
 RECENT_RAIN_SKIP_MM = 6.0    # rain in the last 48 h that saturates the root zone
-FORECAST_RAIN_SKIP_MM = 5.0  # expected rain in the next 24 h
+FORECAST_RAIN_SKIP_MM = 6.0  # expected rain in the next 24 h
 FORECAST_PROB_MIN = 60       # % probability for forecast rain to count fully
 HIGH_WIND_KMH = 20.0         # spray drifts above this; delay to a calmer time
 HIGH_HUMIDITY_PCT = 85.0     # skip at or above this: little evaporation, soil likely still damp
