@@ -356,7 +356,7 @@ const zones = {
     if (this.running) await this.stop(this.running.id);
     const minutes = Number($(`zmin-${id}`).value);
     const totalMs = minutes * this.msPerMinute();
-    await controller.start(id, totalMs);
+    const sent = await controller.start(id, totalMs);
     this.running = { id, minutes, totalMs, startedAt: Date.now(), timer: setInterval(() => this.tick(), 200) };
     $(`zone-${id}`).classList.add("running");
     $(`zstate-${id}`).textContent = "RUNNING";
@@ -364,6 +364,7 @@ const zones = {
     $(`zbtn-${id}`).setAttribute("aria-label", `Stop ${this.list.find((x) => x.id === id).name}`);
     $(`zbtn-${id}`).className = "btn stop";
     $(`zmin-${id}`).disabled = true;
+    if (!sent) $(`zinfo-${id}`).textContent = "Device not reached · running on screen only";
     this.tick();
   },
 

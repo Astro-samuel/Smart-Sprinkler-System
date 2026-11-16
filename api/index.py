@@ -9,8 +9,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 import httpx  # noqa: E402
-from fastapi import FastAPI, HTTPException, Query  # noqa: E402
-
+from fastapi import FastAPI, HTTPException, Query, Response  # noqa: E402
+from fastapi.responses import JSONResponse  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
 
 from sprinkler import config as C  # noqa: E402
@@ -84,9 +84,15 @@ def stop_zone(zone_id: int):
 
 
 @app.get("/api/device/state")
-def device_state():
+def device_state(response: Response):
     """Polled by the ESP32: should the relay be on, and for how much longer."""
+    response.headers["Cache-Control"] = "no-store"
     return device.state()
+
+
+@app.exception_handler(device.StoreError)
+async def store_unavailable(_request, exc: device.StoreError):
+    return JSONResponse({"detail": str(exc)}, status_code=503)
 
 
 # Local dev only: serve the static frontend. On Vercel, /public is served by the CDN.
